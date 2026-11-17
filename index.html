@@ -96,8 +96,9 @@ const NEGOCIO = {
   nombre: "Ferretería Dany",
   zona: "Villa Ballester",
   alias: "ferreteriadany1.mp",           // alias real de Mercado Pago / banco
-  cvu: "0000003100339355786991",         // CVU o CBU (22 números). Vacío = no se muestra
-  titular: "Orlandi Daniel Alejandro",   // como aparece al transferir. Vacío = no se muestra
+  cvu: "",                               // CVU o CBU (22 números). Vacío = no se muestra. Pendiente: 0000003100339355786991 figuraba a nombre de Orlandi Daniel Alejandro, confirmar que sea de la SRL
+  titular: "Orlandi Hnos e Hijos SRL",   // como aparece al transferir. Vacío = no se muestra
+  cuit: "30-71936133-8",                 // CUIT del titular (vacío = no se muestra)
   whatsapp: "5491120345160",             // 549 + característica + número, sin espacios
   instagram: "ferreteriadany",           // usuario sin @ (vacío = no se muestra)
   web: "https://ferreteriadany.com.ar",  // tienda online (vacío = no se muestra)
@@ -136,7 +137,7 @@ const NEGOCIO = {
       <span class="val" id="cvu"></span>
       <button class="copy" type="button" id="copyCvu">Copiar</button>
     </div>
-    <p class="holder" id="holderRow">Titular: <b id="titular"></b>. Fijate que coincida antes de confirmar.</p>
+    <p class="holder" id="holderRow">Titular: <b id="titular"></b><span id="cuitTxt"></span>. Fijate que coincida antes de confirmar.</p>
 
     <a class="btn primary" id="openMP" href="https://www.mercadopago.com.ar/" target="_blank" rel="noopener">Abrir Mercado Pago</a>
     <p class="hint">El alias se copia solo: pegalo en la app. ¿Otro banco? Igual.</p>
@@ -191,6 +192,7 @@ const NEGOCIO = {
   $("demo").hidden = !(/TU\.ALIAS/.test(N.alias) || /0{7}$/.test(N.whatsapp));
   $("cvuRow").hidden = !N.cvu;
   $("holderRow").hidden = !N.titular;
+  if (N.cuit) $("cuitTxt").textContent = " (CUIT " + N.cuit + ")";
 
   const wa = msg => "https://wa.me/" + N.whatsapp + "?text=" + encodeURIComponent(msg);
   $("waTile").href = wa("Hola! Quería consultar por ");
