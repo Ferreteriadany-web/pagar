@@ -213,7 +213,27 @@ const NEGOCIO = {
   }
   $("copyAlias").addEventListener("click", e => copy(N.alias, e.currentTarget));
   $("copyCvu").addEventListener("click", e => copy(N.cvu, e.currentTarget));
-  $("openMP").addEventListener("click", () => copy(N.alias, $("copyAlias")));
+  // Abrir la app de Mercado Pago: Android por intent (con Play Store de respaldo),
+  // iPhone por esquema mercadopago:// (con App Store de respaldo), computadora por la web.
+  const ua = navigator.userAgent;
+  const isAndroid = /Android/i.test(ua);
+  const isIOS = /iPhone|iPad|iPod/i.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+  const MP = {
+    app: "mercadopago://home",
+    android: "intent://home#Intent;scheme=mercadopago;package=com.mercadopago.wallet;S.browser_fallback_url=" +
+             encodeURIComponent("https://play.google.com/store/apps/details?id=com.mercadopago.wallet") + ";end",
+    appStore: "https://apps.apple.com/ar/app/mercado-pago/id925436649"
+  };
+  const mpBtn = $("openMP");
+  if (isAndroid || isIOS){ mpBtn.removeAttribute("target"); mpBtn.href = isAndroid ? MP.android : MP.app; }
+  mpBtn.addEventListener("click", e => {
+    copy(N.alias, $("copyAlias"));
+    if (!isIOS) return;                       // Android y compu siguen el href
+    e.preventDefault();
+    const t = setTimeout(() => { if (!document.hidden) location.href = MP.appStore; }, 2000);
+    document.addEventListener("visibilitychange", () => { if (document.hidden) clearTimeout(t); }, {once:true});
+    location.href = MP.app;
+  });
 
   // Horarios y estado abierto/cerrado en hora argentina
   const dias = ["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"];
