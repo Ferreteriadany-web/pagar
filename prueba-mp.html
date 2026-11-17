@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Prueba Mercado Pago</title>
+<style>
+body{font-family:system-ui,sans-serif;margin:0;padding:16px;background:#F3F2EF;color:#2E2E2E}
+h1{font-size:20px;margin:0 0 6px}
+p{font-size:14px;color:#555;margin:0 0 14px}
+a{display:block;background:#fff;border:1.5px solid #D1D0CB;border-radius:10px;padding:14px;margin-bottom:10px;color:#2E2E2E;text-decoration:none;font-weight:600}
+a small{display:block;font-weight:400;color:#777;font-size:12px;word-break:break-all;margin-top:4px}
+b.n{color:#EB1D24}
+</style>
+</head>
+<body>
+<h1>Prueba: abrir Mercado Pago en Transferir</h1>
+<p>Tocá cada opción. Si alguna abre la pantalla de transferir (mejor si ya trae el alias <b>ferreteriadany1.mp</b>), anotá el número. Para volver, usá el botón Atrás.</p>
+<div id="list"></div>
+<script>
+const alias = "ferreteriadany1.mp";
+const c = [
+  "mercadopago://money_transfer",
+  "mercadopago://money_transfer?alias=" + alias,
+  "mercadopago://transfer",
+  "mercadopago://transfer?alias=" + alias,
+  "mercadopago://transfers",
+  "mercadopago://send_money",
+  "mercadopago://money_out",
+  "mercadopago://pix_transfer",
+  "https://www.mercadopago.com.ar/money-transfer",
+  "https://www.mercadopago.com.ar/transfer?alias=" + alias,
+  "https://www.mercadopago.com.ar/money-out/transfer",
+  "https://link.mercadopago.com.ar/" + alias.replace(".mp","")
+];
+const list = document.getElementById("list");
+c.forEach((u, i) => {
+  const a = document.createElement("a");
+  a.href = u;
+  a.innerHTML = '<b class="n">' + (i + 1) + '.</b> Probar<small></small>';
+  a.querySelector("small").textContent = u;
+  a.addEventListener("click", () => { try { navigator.clipboard.writeText(alias); } catch(e){} });
+  list.append(a);
+});
+</script>
+</body>
+</html>
