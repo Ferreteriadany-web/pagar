@@ -99,7 +99,10 @@ const NEGOCIO = {
   cvu: "0000003100339355786991",         // CVU o CBU (22 números). Vacío = no se muestra
   titular: "Orlandi Hnos e Hijos SRL",   // como aparece al transferir. Vacío = no se muestra
   cuit: "30-71936133-8",                 // CUIT del titular (vacío = no se muestra)
-  whatsapp: "5491120345160",             // 549 + característica + número, sin espacios
+  // Link "Transferime con Mercado Pago" (app de MP > tus datos de cuenta > Compartir) y el destino interno al que lleva
+  mpLink: "https://mpago.la/1HHp4cq",
+  mpDeep: "mplayer/send_money_redirector?user_id=166855946&entry_point=moneyin_account_data_mla",
+  whatsapp: "5491120345160",            // 549 + característica + número, sin espacios
   instagram: "ferreteriadany",           // usuario sin @ (vacío = no se muestra)
   web: "https://ferreteriadany.com.ar",  // tienda online (vacío = no se muestra)
   googlePlaceId: "ChIJF6brtyG6vJUREqYGlCxe3IE", // ficha de Google Maps (mapa y reseñas). Vacío = busca por dirección
@@ -126,7 +129,7 @@ const NEGOCIO = {
 
   <section class="pay" aria-labelledby="payTitle">
     <h2 id="payTitle">Pagar por transferencia</h2>
-    <p class="lead">Sin dictar nada. Copiá el alias y pagá desde tu app.</p>
+    <p class="lead">Sin dictar nada. Pagá con Mercado Pago o copiá el alias.</p>
 
     <div class="tag">
       <span class="lbl">Alias</span>
@@ -141,7 +144,7 @@ const NEGOCIO = {
     <p class="holder" id="holderRow">Titular: <b id="titular"></b><span id="cuitTxt"></span>. Fijate que coincida antes de confirmar.</p>
 
     <a class="btn primary" id="openMP" href="https://www.mercadopago.com.ar/" target="_blank" rel="noopener">Abrir Mercado Pago</a>
-    <p class="hint">El alias se copia solo: pegalo en la app. ¿Otro banco? Igual.</p>
+    <p class="hint" id="mpHint">El alias se copia solo: pegalo en la app. ¿Otro banco? Igual.</p>
     <a class="btn ghost" id="paid" target="_blank" rel="noopener">Ya transferí, avisar por WhatsApp</a>
   </section>
 
@@ -262,13 +265,21 @@ const NEGOCIO = {
   }
   $("copyAlias").addEventListener("click", e => copy(N.alias, e.currentTarget));
   $("copyCvu").addEventListener("click", e => copy(N.cvu, e.currentTarget));
-  // Mercado Pago: copia el alias y abre la app (si no está instalada, la tienda de apps)
-  appLink($("openMP"), {
+  // Mercado Pago: abre la app en "enviar dinero" con la cuenta del local ya cargada (transferencia, sin comisión).
+  // Si la app no abre, cae en el link oficial de Mercado Pago, que la abre o lleva a instalarla.
+  if (N.mpLink && N.mpDeep) appLink($("openMP"), {
+    web: N.mpLink,
+    android: intentScheme("mercadopago", N.mpDeep, "com.mercadopago.wallet", N.mpLink),
+    ios: "mercadopago://" + N.mpDeep,
+    iosFallback: N.mpLink
+  });
+  else appLink($("openMP"), {
     web: "https://www.mercadopago.com.ar/",
     android: intentScheme("mercadopago", "home", "com.mercadopago.wallet", "https://play.google.com/store/apps/details?id=com.mercadopago.wallet"),
     ios: "mercadopago://home",
     iosFallback: "https://apps.apple.com/ar/app/mercado-pago/id925436649"
   });
+  if (N.mpLink) $("mpHint").textContent = "Se abre la app con la cuenta ya cargada: solo ponés el monto. ¿Otro banco? Copiá el alias.";
   $("openMP").addEventListener("click", () => copy(N.alias, $("copyAlias")), true);
 
   // Horarios y estado abierto/cerrado en hora argentina
