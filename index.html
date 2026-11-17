@@ -229,12 +229,13 @@ const NEGOCIO = {
   appLink($("waPieza"), wa("Hola! ¿Tienen esta pieza? Les mando foto: "));
   appLink($("paid"), wa("Hola! Te transferí $ al alias " + N.alias + ". Mi nombre es "));
 
-  const mapWeb = "https://www.google.com/maps/search/?api=1&query=" + enc(N.nombre + ", " + N.direccion) +
-                 (N.googlePlaceId ? "&query_place_id=" + N.googlePlaceId : "");
+  // Con googlePlaceId se abre la ficha del local (reseñas, fotos, horarios), no una dirección suelta
+  const mapWeb = "https://www.google.com/maps/search/?api=1&query=" +
+                 (N.googlePlaceId ? enc(N.nombre) + "&query_place_id=" + N.googlePlaceId : enc(N.nombre + ", " + N.direccion));
   appLink($("mapTile"), {
     web: mapWeb,
     android: intentHttps(mapWeb, "com.google.android.apps.maps"),
-    ios: "comgooglemaps://?q=" + enc(N.nombre + ", " + N.direccion) + (N.coords ? "&center=" + N.coords + "&zoom=17" : "")
+    ios: "comgooglemapsurl://" + mapWeb.replace(/^https:\/\//, "")
   });
 
   if (N.instagram){
