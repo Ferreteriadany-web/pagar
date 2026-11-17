@@ -62,7 +62,8 @@ button:focus-visible,.btn:focus-visible{outline:3px solid var(--accent);outline-
 .copy.done{border-color:var(--ok);color:var(--ok)}
 .primary{background:var(--accent);color:var(--accent-ink);border-radius:12px;padding:16px;font-family:var(--f-display);font-weight:700;font-size:21px;text-transform:uppercase;letter-spacing:.02em;width:100%}
 .primary:active{transform:translateY(1px)}
-.ghost{background:transparent;color:var(--ink);border:1.5px solid var(--line);border-radius:12px;padding:13px;font-weight:600;width:100%}
+.ghost{background:transparent;color:var(--ink);border:1.5px solid var(--line);border-radius:12px;padding:13px;font-weight:600;font-size:15px;width:100%;text-align:center}
+#cuitTxt{white-space:nowrap}
 .hint{font-size:13px;color:var(--muted);text-align:center;margin:-6px 0 0}
 
 /* Accesos */
@@ -141,7 +142,7 @@ const NEGOCIO = {
 
     <a class="btn primary" id="openMP" href="https://www.mercadopago.com.ar/" target="_blank" rel="noopener">Abrir Mercado Pago</a>
     <p class="hint">El alias se copia solo: pegalo en la app. ¿Otro banco? Igual.</p>
-    <a class="btn ghost" id="paid" target="_blank" rel="noopener">Ya transferí, aviso por WhatsApp</a>
+    <a class="btn ghost" id="paid" target="_blank" rel="noopener">Ya transferí, avisar por WhatsApp</a>
   </section>
 
   <nav class="grid" aria-label="Contacto">
