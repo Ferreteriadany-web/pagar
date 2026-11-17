@@ -102,8 +102,8 @@ const NEGOCIO = {
   whatsapp: "5491120345160",             // 549 + característica + número, sin espacios
   instagram: "ferreteriadany",           // usuario sin @ (vacío = no se muestra)
   web: "https://ferreteriadany.com.ar",  // tienda online (vacío = no se muestra)
-  resenaGoogle: "",                      // link "Pedir reseñas" de Google Business
-  mapa: "https://www.google.com/maps/search/?api=1&query=Av.+9+de+Julio+6078,+Villa+Ballester",
+  googlePlaceId: "ChIJF6brtyG6vJUREqYGlCxe3IE", // ficha de Google Maps (mapa y reseñas). Vacío = busca por dirección
+  coords: "-34.5511455,-58.5787635",     // ubicación del local
   direccion: "Av. 9 de Julio 6078, Villa Ballester",
   // horarios por día (0 = domingo). Cada día: lista de [abre, cierra]
   horarios: {
@@ -164,7 +164,7 @@ const NEGOCIO = {
     </a>
     <a class="tile" id="revTile" target="_blank" rel="noopener" hidden>
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1 6.2L12 17.3 6.5 20.2l1-6.2L3 9.6l6.2-.9z"/></svg>
-      <b>Reseña</b><span>Contanos cómo te atendimos</span>
+      <b>Reseñas</b><span>Contanos cómo te atendimos en Google</span>
     </a>
     <a class="tile" id="webTile" target="_blank" rel="noopener" hidden>
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M2 3h3l2.6 12.2a1.5 1.5 0 0 0 1.5 1.2h8.6a1.5 1.5 0 0 0 1.5-1.1L21 7H6"/></svg>
@@ -195,13 +195,61 @@ const NEGOCIO = {
   $("holderRow").hidden = !N.titular;
   if (N.cuit) $("cuitTxt").textContent = " (CUIT " + N.cuit + ")";
 
-  const wa = msg => "https://wa.me/" + N.whatsapp + "?text=" + encodeURIComponent(msg);
-  $("waTile").href = wa("Hola! Quería consultar por ");
-  $("waPieza").href = wa("Hola! ¿Tienen esta pieza? Les mando foto: ");
-  $("paid").href = wa("Hola! Te transferí $ al alias " + N.alias + ". Mi nombre es ");
-  $("mapTile").href = N.mapa;
-  if (N.instagram){ $("igTile").href = "https://instagram.com/" + N.instagram; $("igTile").hidden = false; }
-  if (N.resenaGoogle){ $("revTile").href = N.resenaGoogle; $("revTile").hidden = false; }
+  // Cada botón abre la app que corresponde: en Android por "intent" (si la app no está, va a la web),
+  // en iPhone por el esquema de la app (si no abre en 2 s, va a la web), en la compu directo a la web.
+  const ua = navigator.userAgent;
+  const isAndroid = /Android/i.test(ua);
+  const isIOS = /iPhone|iPad|iPod/i.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+  const enc = encodeURIComponent;
+  const intentHttps = (url, pkg, fallback) =>
+    "intent://" + url.replace(/^https?:\/\//, "") + "#Intent;scheme=https;package=" + pkg + ";S.browser_fallback_url=" + enc(fallback || url) + ";end";
+  const intentScheme = (scheme, rest, pkg, fallback) =>
+    "intent://" + rest + "#Intent;scheme=" + scheme + ";" + (pkg ? "package=" + pkg + ";" : "") + "S.browser_fallback_url=" + enc(fallback) + ";end";
+
+  function appLink(el, l){
+    el.href = l.web;
+    if (isAndroid && l.android){ el.href = l.android; el.removeAttribute("target"); }
+    else if (isIOS && l.ios){ el.href = l.ios; el.removeAttribute("target"); el.dataset.fallback = l.iosFallback || l.web; }
+  }
+  document.addEventListener("click", e => {
+    const a = e.target.closest("a[data-fallback]");
+    if (!a) return;
+    e.preventDefault();
+    const t = setTimeout(() => { if (!document.hidden) location.href = a.dataset.fallback; }, 2000);
+    document.addEventListener("visibilitychange", () => { if (document.hidden) clearTimeout(t); }, {once:true});
+    location.href = a.getAttribute("href");
+  });
+
+  const wa = msg => {
+    const q = "phone=" + N.whatsapp + "&text=" + enc(msg);
+    const web = "https://wa.me/" + N.whatsapp + "?text=" + enc(msg);
+    return { web, ios: "whatsapp://send?" + q, android: intentScheme("whatsapp", "send?" + q, "", web) };
+  };
+  appLink($("waTile"), wa("Hola! Quería consultar por "));
+  appLink($("waPieza"), wa("Hola! ¿Tienen esta pieza? Les mando foto: "));
+  appLink($("paid"), wa("Hola! Te transferí $ al alias " + N.alias + ". Mi nombre es "));
+
+  const mapWeb = "https://www.google.com/maps/search/?api=1&query=" + enc(N.nombre + ", " + N.direccion) +
+                 (N.googlePlaceId ? "&query_place_id=" + N.googlePlaceId : "");
+  appLink($("mapTile"), {
+    web: mapWeb,
+    android: intentHttps(mapWeb, "com.google.android.apps.maps"),
+    ios: "comgooglemaps://?q=" + enc(N.nombre + ", " + N.direccion) + (N.coords ? "&center=" + N.coords + "&zoom=17" : "")
+  });
+
+  if (N.instagram){
+    const ig = "https://instagram.com/" + N.instagram;
+    appLink($("igTile"), {
+      web: ig,
+      android: intentHttps("https://instagram.com/_u/" + N.instagram, "com.instagram.android", ig),
+      ios: "instagram://user?username=" + N.instagram
+    });
+    $("igTile").hidden = false;
+  }
+  if (N.googlePlaceId){
+    $("revTile").href = "https://search.google.com/local/writereview?placeid=" + N.googlePlaceId;
+    $("revTile").hidden = false;
+  }
   if (N.web){ $("webTile").href = N.web; $("webTile").hidden = false; }
   const small = [...document.querySelectorAll(".grid .tile:not(.wide)")].filter(t => !t.hidden);
   if (small.length % 2) small[small.length-1].classList.add("wide");
@@ -213,27 +261,14 @@ const NEGOCIO = {
   }
   $("copyAlias").addEventListener("click", e => copy(N.alias, e.currentTarget));
   $("copyCvu").addEventListener("click", e => copy(N.cvu, e.currentTarget));
-  // Abrir la app de Mercado Pago: Android por intent (con Play Store de respaldo),
-  // iPhone por esquema mercadopago:// (con App Store de respaldo), computadora por la web.
-  const ua = navigator.userAgent;
-  const isAndroid = /Android/i.test(ua);
-  const isIOS = /iPhone|iPad|iPod/i.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
-  const MP = {
-    app: "mercadopago://home",
-    android: "intent://home#Intent;scheme=mercadopago;package=com.mercadopago.wallet;S.browser_fallback_url=" +
-             encodeURIComponent("https://play.google.com/store/apps/details?id=com.mercadopago.wallet") + ";end",
-    appStore: "https://apps.apple.com/ar/app/mercado-pago/id925436649"
-  };
-  const mpBtn = $("openMP");
-  if (isAndroid || isIOS){ mpBtn.removeAttribute("target"); mpBtn.href = isAndroid ? MP.android : MP.app; }
-  mpBtn.addEventListener("click", e => {
-    copy(N.alias, $("copyAlias"));
-    if (!isIOS) return;                       // Android y compu siguen el href
-    e.preventDefault();
-    const t = setTimeout(() => { if (!document.hidden) location.href = MP.appStore; }, 2000);
-    document.addEventListener("visibilitychange", () => { if (document.hidden) clearTimeout(t); }, {once:true});
-    location.href = MP.app;
+  // Mercado Pago: copia el alias y abre la app (si no está instalada, la tienda de apps)
+  appLink($("openMP"), {
+    web: "https://www.mercadopago.com.ar/",
+    android: intentScheme("mercadopago", "home", "com.mercadopago.wallet", "https://play.google.com/store/apps/details?id=com.mercadopago.wallet"),
+    ios: "mercadopago://home",
+    iosFallback: "https://apps.apple.com/ar/app/mercado-pago/id925436649"
   });
+  $("openMP").addEventListener("click", () => copy(N.alias, $("copyAlias")), true);
 
   // Horarios y estado abierto/cerrado en hora argentina
   const dias = ["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"];
